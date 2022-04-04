@@ -28,7 +28,7 @@ def process(data, seq_id, videoname, output_root):
     if not os.path.exists(output_root + seqname):
         os.makedirs(output_root + seqname)
     else:
-        print("[INFO] Something Wrong, stop process")
+        print("[INFO] Something Wrong, stop process", flush=True)
         return True
 
     list_str_timestamps = []
@@ -43,6 +43,8 @@ def process(data, seq_id, videoname, output_root):
 
     # extract frames from a video
     for idx, str_timestamp in enumerate(list_str_timestamps):
+        # command = 'ffmpeg -ss ' + str_timestamp + ' -i ' + videoname + ' -vf scale=320x180 -vframes 1 -f image2 ' + output_root + seqname + '/' + str(
+        #     data.list_list_timestamps[seq_id][idx]) + '.png'
         command = 'ffmpeg -ss ' + str_timestamp + ' -i ' + videoname + ' -vframes 1 -f image2 ' + output_root + seqname + '/' + str(
             data.list_list_timestamps[seq_id][idx]) + '.png'
         # print("current command is {}".format(command))
@@ -74,8 +76,8 @@ def wrap_process(list_args):
 
 
 class DataDownloader:
-    def __init__(self, dataroot, mode='test'):
-        print("[INFO] Loading data list ... ", end='')
+    def __init__(self, dataroot, dataset, mode='test'):
+        print("[INFO] Loading data list ... ", end='', flush=True)
         self.dataroot = dataroot
         self.list_seqnames = sorted(glob.glob(dataroot + '/cameras/*.txt'))
         self.output_root = os.path.join(dataroot, 'frames/')
@@ -109,20 +111,20 @@ class DataDownloader:
 
             # self.list_data.reverse()
             print(" Done! ")
-            print("[INFO] {} movies are used in {} mode".format(len(self.list_data), self.mode))
+            print("[INFO] {} movies are used in {} mode".format(len(self.list_data), self.mode), flush=True)
 
     def Run(self):
-        print("[INFO] Start downloading {} movies".format(len(self.list_data)))
+        print("[INFO] Start downloading {} movies".format(len(self.list_data)), flush=True)
 
         for global_count, data in enumerate(self.list_data):
-            print("[INFO] Downloading {} ".format(data.url))
+            print("[INFO] Downloading {} ".format(data.url), flush=True)
             try:
                 # sometimes this fails because of known issues of pytube and unknown factors
                 yt = YouTube(data.url)
                 stream = yt.streams.filter(res='720p').first()
-                stream.download('./', 'current_' + mode)
+                stream.download('./', dataset + '_current_' + mode)
             except:
-                failure_log = open('failed_videos_' + mode + '.txt', 'a')
+                failure_log = open(dataset + '_failed_videos_' + mode + '.txt', 'a')
                 for seqname in data.list_seqnames:
                     failure_log.writelines(seqname + '\n')
                 failure_log.close()
@@ -132,7 +134,7 @@ class DataDownloader:
 
             videoname_candidate_list = glob.glob('./*')
             for videoname_candidate in videoname_candidate_list:
-                if f"current_{mode}" in videoname_candidate:
+                if dataset + f"_current_{mode}" in videoname_candidate:
                     videoname = videoname_candidate
 
             if len(data) == 1:  # len(data) is len(data.list_seqnames)
@@ -153,20 +155,31 @@ class DataDownloader:
 
 if __name__ == "__main__":
 
-    if len(sys.argv) != 2:
-        print("usage: this.py [test or train]")
-        quit()
+    # if len(sys.argv) != 2:
+    #     print("usage: this.py [test or train]", flush=True)
+    #     quit()
 
     if sys.argv[1] == "test":
         mode = "test"
     elif sys.argv[1] == "train":
         mode = "train"
     else:
-        print("invalid mode")
+        print("invalid mode", flush=True)
         quit()
 
-    dataroot = os.path.join("../RealEstate10K-subset/", mode)
-    print(dataroot)
-    downloader = DataDownloader(dataroot, mode)
+    if sys.argv[2] == "acid":
+        dataroot = os.path.join("/scratch_net/biwidl212/shecai/datasets/acid/", mode)
+        dataset = "acid"
+    elif sys.argv[2] == "realestate10k":
+        dataroot = os.path.join("/scratch_net/biwidl212/shecai/RealEstate10K-subset/", mode)
+        dataset = "realestate10k"
+    else:
+        print("invalid root", flush=True)
+        quit()
+
+    # dataroot = os.path.join("/scratch_net/biwidl212/shecai/RealEstate10K-subset/", mode)
+    # dataroot = os.path.join("/scratch_net/biwidl212/shecai/ACID/", mode)
+    print(dataroot, flush=True)
+    downloader = DataDownloader(dataroot, dataset, mode)
     isOK = downloader.Run()
 
