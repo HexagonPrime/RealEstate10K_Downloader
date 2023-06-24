@@ -168,7 +168,8 @@ if __name__ == "__main__":
         quit()
 
     if sys.argv[2] == "acid":
-        dataroot = os.path.join("/scratch_net/biwidl212/shecai/datasets/acid/", mode)
+        # dataroot = os.path.join("/scratch_net/biwidl212/shecai/datasets/acid/", mode)
+        dataroot = os.path.join("/media/data6/shengqu/datasets/acid/", mode)
         dataset = "acid"
     elif sys.argv[2] == "realestate10k":
         dataroot = os.path.join("/scratch_net/biwidl212/shecai/RealEstate10K-subset/", mode)
